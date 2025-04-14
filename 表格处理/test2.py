@@ -9,6 +9,8 @@ data = {
 }
 df = pd.DataFrame(data)
 
+print(df)
+
 # 特征和标签
 X = df[['面积']]
 y = df['房价']
