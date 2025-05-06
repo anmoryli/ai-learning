@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藏药植物视频流与识别</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .video-container {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .captured-image {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            margin: 5px;
+        }
+        @media (max-width: 576px) {
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">藏药植物视频流与识别</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="video-container">
+                    <img src="/video_feed" alt="ESP32 Video Stream" class="img-fluid">
+                </div>
+                <img id="capturedImage" class="captured-image img-fluid" alt="Captured Image">
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" onclick="captureImage()">捕获图片</button>
+                    <button class="btn btn-success" onclick="identifySpecies()" disabled id="identifyBtn">识别物种</button>
+                </div>
+                <div class="result-container" id="resultContainer" style="display: none;">
+                    <h4>识别结果</h4>
+                    <p id="speciesInfo"></p>
+                    <p id="imageInfo"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const capturedImage = document.getElementById('capturedImage');
+        const identifyBtn = document.getElementById('identifyBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const speciesInfo = document.getElementById('speciesInfo');
+        const imageInfo = document.getElementById('imageInfo');
+
+        function captureImage() {
+            fetch('/capture')
+                .then(response => {
+                    if (!response.ok) throw new Error('无法捕获图片');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    capturedImage.src = url;
+                    capturedImage.style.display = 'block';
+                    identifyBtn.disabled = false;
+                    resultContainer.style.display = 'none';
+                })
+                .catch(error => {
+                    alert('捕获图片失败: ' + error.message);
+                    console.error('Capture Error:', error);
+                });
+        }
+
+        function identifySpecies() {
+            fetch('/identify', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('识别失败: ' + data.error);
+                        return;
+                    }
+                    speciesInfo.textContent = `物种信息: ${data.species}`;
+                    imageInfo.textContent = `简介: ${data.image_url}`;
+                    resultContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    alert('识别失败: ' + error.message);
+                    console.error('Identify Error:', error);
+                });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
